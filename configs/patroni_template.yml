@@ -1,0 +1,67 @@
+scope: ${CLUSTER_SCOPE:-postgresql-cluster}
+namespace: ${NAMESPACE:-/service/}
+name: ${NODE_NAME}
+
+etcd3:
+  hosts: ${ETCD_HOSTS}
+  protocol: http
+  # SSL-free modda sertifika dosyalarına gerek yok
+  # cacert: /etc/etcd/ssl/ca.crt
+  # cert: /etc/etcd/ssl/etcd-node.crt
+  # key: /etc/etcd/ssl/etcd-node.key
+
+restapi:
+  listen: 0.0.0.0:${PATRONI_PORT:-8008}
+  connect_address: ${NODE_IP}:${PATRONI_PORT:-8008}
+  # certfile: /var/lib/postgresql/ssl/server.pem
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      parameters:
+  ssl: '${PATRONI_SSL:-off}'
+  # ssl_cert_file: /var/lib/postgresql/ssl/server.crt
+  # ssl_key_file: /var/lib/postgresql/ssl/server.key
+        max_connections: 100
+        shared_buffers: 256MB
+        wal_level: replica
+        hot_standby: on
+        wal_keep_segments: 8
+        max_wal_senders: 3
+        max_replication_slots: 5
+        wal_log_hints: on
+      pg_hba:
+      - hostssl replication replicator 127.0.0.1/32 md5
+      - hostssl replication replicator 0.0.0.0/0 md5
+      - hostssl all all 127.0.0.1/32 md5
+      - hostssl all all 0.0.0.0/0 md5
+      - host all all 127.0.0.1/32 md5
+      - host all all 0.0.0.0/0 md5
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+
+postgresql:
+  listen: 0.0.0.0:${POSTGRES_PORT:-5432}
+  connect_address: ${NODE_IP}:${POSTGRES_PORT:-5432}
+  data_dir: /var/lib/postgresql/data
+  bin_dir: ${POSTGRES_BIN_DIR:-/usr/lib/postgresql/17/bin}
+  authentication:
+    superuser:
+      username: postgres
+      password: ${POSTGRES_PASSWORD}
+    replication:
+      username: replicator
+      password: ${REPLICATOR_PASSWORD}
+  parameters:
+    max_connections: 100
+    shared_buffers: 256MB
+
+tags:
+  nofailover: false
+  noloadbalance: false
+  clonefrom: false

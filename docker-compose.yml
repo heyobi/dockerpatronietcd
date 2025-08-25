@@ -1,0 +1,328 @@
+version: "3.8"
+
+networks:
+  patroni_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  postgres_data_01:
+  postgres_data_02:
+  postgres_data_03:
+  postgres_data_04:
+  postgres_data_05:
+  postgres_data_06:
+  postgres_data_07:
+  postgres_data_08:
+  postgres_data_09:
+  etcd_data_01:
+  etcd_data_02:
+  etcd_data_03:
+
+services:
+  etcd-01:
+    build: .
+    container_name: etcd-01
+    hostname: etcd-01
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.10
+    environment:
+      - NODE_NAME=etcd-01
+      - NODE_IP=172.25.0.10
+      - ETCD_CLUSTER_SIZE=3
+      - ETCD_INITIAL_CLUSTER=etcd-01=http://172.25.0.10:2380,etcd-02=http://172.25.0.11:2380,etcd-03=http://172.25.0.12:2380
+      - SKIP_POSTGRES=1
+      - POSTGRES_PASSWORD=securepassword123
+    volumes:
+      - etcd_data_01:/var/lib/etcd
+    restart: unless-stopped
+
+  etcd-02:
+    build: .
+    container_name: etcd-02
+    hostname: etcd-02
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.11
+    environment:
+      - NODE_NAME=etcd-02
+      - NODE_IP=172.25.0.11
+      - ETCD_CLUSTER_SIZE=3
+      - ETCD_INITIAL_CLUSTER=etcd-01=http://172.25.0.10:2380,etcd-02=http://172.25.0.11:2380,etcd-03=http://172.25.0.12:2380
+      - SKIP_POSTGRES=1
+      - POSTGRES_PASSWORD=securepassword123
+    volumes:
+      - etcd_data_02:/var/lib/etcd
+    restart: unless-stopped
+
+  etcd-03:
+    build: .
+    container_name: etcd-03
+    hostname: etcd-03
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.12
+    environment:
+      - NODE_NAME=etcd-03
+      - NODE_IP=172.25.0.12
+      - ETCD_CLUSTER_SIZE=3
+      - ETCD_INITIAL_CLUSTER=etcd-01=http://172.25.0.10:2380,etcd-02=http://172.25.0.11:2380,etcd-03=http://172.25.0.12:2380
+      - SKIP_POSTGRES=1
+      - POSTGRES_PASSWORD=securepassword123
+    volumes:
+      - etcd_data_03:/var/lib/etcd
+    restart: unless-stopped
+
+  postgresql-01:
+    build: .
+    container_name: postgresql-01
+    hostname: postgresql-01
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.100
+    environment:
+      - NODE_NAME=postgresql-01
+      - NODE_IP=172.25.0.100
+      - CLUSTER_NODES=postgresql-01=https://172.25.0.100:2380,postgresql-02=https://172.25.0.101:2380,postgresql-03=https://172.25.0.102:2380,postgresql-04=https://172.25.0.103:2380,postgresql-05=https://172.25.0.104:2380,postgresql-06=https://172.25.0.105:2380,postgresql-07=https://172.25.0.106:2380,postgresql-08=https://172.25.0.107:2380,postgresql-09=https://172.25.0.108:2380
+      - ETCD_HOSTS=172.25.0.10:2379,172.25.0.11:2379,172.25.0.12:2379
+      - SKIP_ETCD=1
+      - POSTGRES_PASSWORD=securepassword123
+      - REPLICATOR_PASSWORD=replicatorpassword123
+    volumes:
+      - postgres_data_01:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PATRONI_PORT}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgresql-02:
+    build: .
+    container_name: postgresql-02
+    hostname: postgresql-02
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.101
+    environment:
+      - NODE_NAME=postgresql-02
+      - NODE_IP=172.25.0.101
+      - CLUSTER_NODES=postgresql-01=https://172.25.0.100:2380,postgresql-02=https://172.25.0.101:2380,postgresql-03=https://172.25.0.102:2380,postgresql-04=https://172.25.0.103:2380,postgresql-05=https://172.25.0.104:2380,postgresql-06=https://172.25.0.105:2380,postgresql-07=https://172.25.0.106:2380,postgresql-08=https://172.25.0.107:2380,postgresql-09=https://172.25.0.108:2380
+      - ETCD_HOSTS=172.25.0.10:2379,172.25.0.11:2379,172.25.0.12:2379
+      - SKIP_ETCD=1
+      - POSTGRES_PASSWORD=securepassword123
+      - REPLICATOR_PASSWORD=replicatorpassword123
+    volumes:
+      - postgres_data_02:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PATRONI_PORT}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgresql-03:
+    build: .
+    container_name: postgresql-03
+    hostname: postgresql-03
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.102
+    environment:
+      - NODE_NAME=postgresql-03
+      - NODE_IP=172.25.0.102
+      - CLUSTER_NODES=postgresql-01=https://172.25.0.100:2380,postgresql-02=https://172.25.0.101:2380,postgresql-03=https://172.25.0.102:2380,postgresql-04=https://172.25.0.103:2380,postgresql-05=https://172.25.0.104:2380,postgresql-06=https://172.25.0.105:2380,postgresql-07=https://172.25.0.106:2380,postgresql-08=https://172.25.0.107:2380,postgresql-09=https://172.25.0.108:2380
+      - ETCD_HOSTS=172.25.0.10:2379,172.25.0.11:2379,172.25.0.12:2379
+      - SKIP_ETCD=1
+      - POSTGRES_PASSWORD=securepassword123
+      - REPLICATOR_PASSWORD=replicatorpassword123
+    volumes:
+      - postgres_data_03:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PATRONI_PORT}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgresql-04:
+    build: .
+    container_name: postgresql-04
+    hostname: postgresql-04
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.103
+    environment:
+      - NODE_NAME=postgresql-04
+      - NODE_IP=172.25.0.103
+      - CLUSTER_NODES=postgresql-01=https://172.25.0.100:2380,postgresql-02=https://172.25.0.101:2380,postgresql-03=https://172.25.0.102:2380,postgresql-04=https://172.25.0.103:2380,postgresql-05=https://172.25.0.104:2380,postgresql-06=https://172.25.0.105:2380,postgresql-07=https://172.25.0.106:2380,postgresql-08=https://172.25.0.107:2380,postgresql-09=https://172.25.0.108:2380
+      - ETCD_HOSTS=172.25.0.10:2379,172.25.0.11:2379,172.25.0.12:2379
+      - SKIP_ETCD=1
+      - POSTGRES_PASSWORD=securepassword123
+      - REPLICATOR_PASSWORD=replicatorpassword123
+    volumes:
+      - postgres_data_04:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PATRONI_PORT}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgresql-05:
+    build: .
+    container_name: postgresql-05
+    hostname: postgresql-05
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.104
+    environment:
+      - NODE_NAME=postgresql-05
+      - NODE_IP=172.25.0.104
+      - CLUSTER_NODES=postgresql-01=https://172.25.0.100:2380,postgresql-02=https://172.25.0.101:2380,postgresql-03=https://172.25.0.102:2380,postgresql-04=https://172.25.0.103:2380,postgresql-05=https://172.25.0.104:2380,postgresql-06=https://172.25.0.105:2380,postgresql-07=https://172.25.0.106:2380,postgresql-08=https://172.25.0.107:2380,postgresql-09=https://172.25.0.108:2380
+      - ETCD_HOSTS=172.25.0.10:2379,172.25.0.11:2379,172.25.0.12:2379
+      - SKIP_ETCD=1
+      - POSTGRES_PASSWORD=securepassword123
+      - REPLICATOR_PASSWORD=replicatorpassword123
+    volumes:
+      - postgres_data_05:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PATRONI_PORT}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgresql-06:
+    build: .
+    container_name: postgresql-06
+    hostname: postgresql-06
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.105
+    environment:
+      - NODE_NAME=postgresql-06
+      - NODE_IP=172.25.0.105
+      - CLUSTER_NODES=postgresql-01=https://172.25.0.100:2380,postgresql-02=https://172.25.0.101:2380,postgresql-03=https://172.25.0.102:2380,postgresql-04=https://172.25.0.103:2380,postgresql-05=https://172.25.0.104:2380,postgresql-06=https://172.25.0.105:2380,postgresql-07=https://172.25.0.106:2380,postgresql-08=https://172.25.0.107:2380,postgresql-09=https://172.25.0.108:2380
+      - ETCD_HOSTS=172.25.0.10:2379,172.25.0.11:2379,172.25.0.12:2379
+      - SKIP_ETCD=1
+      - POSTGRES_PASSWORD=securepassword123
+      - REPLICATOR_PASSWORD=replicatorpassword123
+    volumes:
+      - postgres_data_06:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PATRONI_PORT}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgresql-07:
+    build: .
+    container_name: postgresql-07
+    hostname: postgresql-07
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.106
+    environment:
+      - NODE_NAME=postgresql-07
+      - NODE_IP=172.25.0.106
+      - CLUSTER_NODES=postgresql-01=https://172.25.0.100:2380,postgresql-02=https://172.25.0.101:2380,postgresql-03=https://172.25.0.102:2380,postgresql-04=https://172.25.0.103:2380,postgresql-05=https://172.25.0.104:2380,postgresql-06=https://172.25.0.105:2380,postgresql-07=https://172.25.0.106:2380,postgresql-08=https://172.25.0.107:2380,postgresql-09=https://172.25.0.108:2380
+      - ETCD_HOSTS=172.25.0.10:2379,172.25.0.11:2379,172.25.0.12:2379
+      - SKIP_ETCD=1
+      - POSTGRES_PASSWORD=securepassword123
+      - REPLICATOR_PASSWORD=replicatorpassword123
+    volumes:
+      - postgres_data_07:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PATRONI_PORT}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgresql-08:
+    build: .
+    container_name: postgresql-08
+    hostname: postgresql-08
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.107
+    environment:
+      - NODE_NAME=postgresql-08
+      - NODE_IP=172.25.0.107
+      - CLUSTER_NODES=postgresql-01=https://172.25.0.100:2380,postgresql-02=https://172.25.0.101:2380,postgresql-03=https://172.25.0.102:2380,postgresql-04=https://172.25.0.103:2380,postgresql-05=https://172.25.0.104:2380,postgresql-06=https://172.25.0.105:2380,postgresql-07=https://172.25.0.106:2380,postgresql-08=https://172.25.0.107:2380,postgresql-09=https://172.25.0.108:2380
+      - ETCD_HOSTS=172.25.0.10:2379,172.25.0.11:2379,172.25.0.12:2379
+      - SKIP_ETCD=1
+      - POSTGRES_PASSWORD=securepassword123
+      - REPLICATOR_PASSWORD=replicatorpassword123
+    volumes:
+      - postgres_data_08:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PATRONI_PORT}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgresql-09:
+    build: .
+    container_name: postgresql-09
+    hostname: postgresql-09
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.108
+    environment:
+      - NODE_NAME=postgresql-09
+      - NODE_IP=172.25.0.108
+      - CLUSTER_NODES=postgresql-01=https://172.25.0.100:2380,postgresql-02=https://172.25.0.101:2380,postgresql-03=https://172.25.0.102:2380,postgresql-04=https://172.25.0.103:2380,postgresql-05=https://172.25.0.104:2380,postgresql-06=https://172.25.0.105:2380,postgresql-07=https://172.25.0.106:2380,postgresql-08=https://172.25.0.107:2380,postgresql-09=https://172.25.0.108:2380
+      - ETCD_HOSTS=172.25.0.10:2379,172.25.0.11:2379,172.25.0.12:2379
+      - SKIP_ETCD=1
+      - POSTGRES_PASSWORD=securepassword123
+      - REPLICATOR_PASSWORD=replicatorpassword123
+    volumes:
+      - postgres_data_09:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PATRONI_PORT}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  haproxy:
+    build:
+      context: ./docker-haproxy
+    container_name: haproxy
+    hostname: haproxy
+    networks:
+      patroni_network:
+        ipv4_address: 172.25.0.2
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+      - "8404:8404"
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg.template:ro
+    depends_on:
+      - postgresql-01
+      - postgresql-02
+      - postgresql-03
+      - postgresql-04
+      - postgresql-05
+      - postgresql-06
+      - postgresql-07
+      - postgresql-08
+      - postgresql-09
+    restart: unless-stopped

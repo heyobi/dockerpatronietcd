@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  generator:
+    build:
+      context: .
+      dockerfile: docker-generate/Dockerfile
+    image: dockerpatroni-generate
+    volumes:
+      - ./:/work
+    working_dir: /work
+    entrypoint: ["python3", "/usr/local/bin/generate_compose.py"]
+    restart: 'no'

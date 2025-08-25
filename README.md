@@ -98,6 +98,12 @@ The README contains project-specific instructions: Makefile commands, `.env` hin
 ### Short Note on `make check`
 - `make check` runs quick Patroni/etcd validations useful for CI or manual verification.
 
+## Example Output for `make check`
+
+For the configuration with `NUMBER_OF_POSTGRES_CLUSTER=9` and `NUMBER_OF_ETCD_CLUSTER=3`, the following is an example output:
+
+![Example make check output](./makecheck.png)
+
 ## Architecture
 
 The following diagram shows the cluster topology and component interactions (etcd, Patroni, PostgreSQL nodes, HAProxy):

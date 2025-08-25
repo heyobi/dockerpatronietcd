@@ -1,3 +1,9 @@
+# dockerpatroni — Quick Usage
+
+This repository is designed to easily launch a high availability (HA) cluster based on PostgreSQL + Patroni + etcd using Docker Compose.
+
+This README focuses on the simple Makefile-based workflow you will use most often: `make up` / `make down` and `.env` preparation.
+
 # Architecture
 
 The following diagram shows the cluster topology and component interactions (etcd, Patroni, PostgreSQL nodes, HAProxy):
@@ -5,12 +11,6 @@ The following diagram shows the cluster topology and component interactions (etc
 ![Architecture diagram](./etcdpatroniimg.png)
 
 Figure: Component diagram — etcd cluster, Patroni-managed PostgreSQL nodes, and HAProxy in front of Postgres.
-
-# dockerpatroni — Quick Usage
-
-This repository is designed to easily launch a high availability (HA) cluster based on PostgreSQL + Patroni + etcd using Docker Compose.
-
-This README focuses on the simple Makefile-based workflow you will use most often: `make up` / `make down` and `.env` preparation.
 
 ## Quick Commands
 

@@ -1,28 +1,28 @@
-# dockerpatroni — hızlı kullanım
+# dockerpatroni — quick usage
 
-Bu repo, Docker Compose kullanarak PostgreSQL + Patroni + etcd tabanlı bir yüksek erişilebilirlik (HA) kümesini kolayca başlatmanız için hazırlanmıştır.
+This repo is prepared to easily launch a high availability (HA) cluster based on PostgreSQL + Patroni + etcd using Docker Compose.
 
-Bu README, artık sık kullandığınız basit Makefile tabanlı akışa odaklanır: `make up` / `make down` ve `.env` hazırlama.
+This README now focuses on the simple Makefile-based workflow you will use most often: `make up` / `make down` and `.env` preparation.
 
-## Hızlı komutlar
+## Quick commands
 
-- make gen    — generator image'ını build edip çalıştırır (oluşan dosyalar: `docker-compose.yml`, `haproxy.cfg`).
-- make up     — ana stack'i başlatır (build + up -d). En sık kullandığınız komut.
-- make down   — stack'i durdurur ve volume'leri kaldırır.
-- make regen  — mevcut `.env` ile generator'ı tekrar çalıştırır (configs yeniden üretilir).
-- make set-nodes N=3 — `.env` içindeki `NUMBER_OF_CLUSTER` değerini değiştirir (sonrasında `make regen` önerilir).
-- make check  — basit cluster kontrolleri çalıştırır (patronictl, etcdctl).
+- make gen    — builds and runs the generator image (produces: `docker-compose.yml`, `haproxy.cfg`).
+- make up     — starts the main stack (build + up -d). The most common command.
+- make down   — stops the stack and removes volumes.
+- make regen  — reruns the generator using the current `.env` (configs are regenerated).
+- make set-nodes N=3 — changes the `NUMBER_OF_CLUSTER` value inside `.env` (afterwards `make regen` is recommended).
+- make check  — runs simple cluster checks (patronictl, etcdctl).
 
-Genelde ihtiyacınız olan tek iki komut:
+In most cases, the only two commands you need are:
 
-- `make up`  — cluster'ı başlatır
-- `make down` — tüm stack'i kapatır
+- `make up`   — start the cluster
+- `make down` — stop the entire stack
 
-## .env nasıl hazırlanır
+## How to prepare `.env`
 
-Repo kökünde `.env` dosyası bulunur. Basit bir kurulum için mevcut `.env`'i düzenleyebilir veya kopyalayarak kendi versiyonunuzu oluşturabilirsiniz.
+At the repo root there is a `.env` file. For a basic setup you can edit the existing `.env` or copy it and create your own version.
 
-Örnek (minimal, gerekli alanlar):
+Example (minimal, required fields):
 
 ```
 POSTGRES_PASSWORD=securepassword123
@@ -40,19 +40,19 @@ NUMBER_OF_POSTGRES_CLUSTER=3
 NUMBER_OF_ETCD_CLUSTER=3
 ```
 
-Notlar:
-- `NUMBER_OF_POSTGRES_CLUSTER` ve `NUMBER_OF_ETCD_CLUSTER` ile node sayısını kontrol edebilirsiniz.
-- `.env`'de değişiklik yaptıktan sonra (özellikle node sayısı veya isimleri değiştiyse) `make regen` veya `make gen` çalıştırın; bu komutlar `docker-compose.yml` ve `haproxy.cfg` gibi dosyaları (configs/) üretir.
+Notes:
+- You can control the number of nodes with `NUMBER_OF_POSTGRES_CLUSTER` and `NUMBER_OF_ETCD_CLUSTER`.
+- After making changes in `.env` (especially if you change node counts or names), run `make regen` or `make gen`; these commands regenerate files like `docker-compose.yml` and `haproxy.cfg` in `configs/`.
 
-## Tipik akış
+## Typical workflow
 
-1. `.env` dosyanızı hazırla veya düzenle.
-2. (Gerekli ise) `make gen` veya `make regen` — konfigürasyon dosyalarını üretin.
-3. `make up` — cluster'ı arka planda başlatın.
-4. Kontrol: `make check` veya `docker compose logs -f` ile servisleri izleyin.
-5. Kapatmak için `make down`.
+1. Prepare or edit your `.env` file.  
+2. (If needed) run `make gen` or `make regen` to generate configuration files.  
+3. Run `make up` to start the cluster in the background.  
+4. Check status with `make check` or watch services via `docker compose logs -f`.  
+5. Run `make down` to shut down everything.  
 
-## Örnek: Hızlı başlatma (yerel)
+## Example: Quick local startup
 
 ```
 # dockerpatroni — quick reference
@@ -98,40 +98,46 @@ Notes:
 
 ## Typical flow
 
-1. Prepare or edit `.env`.
-2. (If needed) `make gen` or `make regen` to produce configs.
-3. `make up` to start the cluster.
-4. Check cluster health with `make check` or inspect logs.
-5. `make down` to stop and remove volumes.
+1. Prepare or edit `.env`.  
+2. (If needed) `make gen` or `make regen` to produce configs.  
+3. `make up` to start the cluster.  
+4. Check cluster health with `make check` or inspect logs.  
+5. `make down` to stop and remove volumes.  
 
 ## Project-specific checks & troubleshooting
 
-Configuration regeneration
+Configuration regeneration  
 - If you changed node counts or topology in `.env`:
 
+  ```
   make set-nodes N=3
   make regen
+  ```
 
-Patroni and etcd checks
+Patroni and etcd checks  
 - Patroni cluster list:
 
+  ```
   docker compose exec postgresql-01 /usr/local/bin/patronictl -c /etc/patroni/config.yml list
+  ```
 
 - etcd endpoints status (example):
 
+  ```
   ENDPOINTS=$(printf "http://%s:2379," etcd-01 etcd-02 etcd-03); ENDPOINTS=${ENDPOINTS%,}; etcdctl --endpoints="$ENDPOINTS" endpoint status --write-out=table
+  ```
 
-HAProxy
+HAProxy  
 - HAProxy stats are exposed on `HAPROXY_STATS_PORT` (e.g. `8404`). Open `http://<HAPROXY_HOST>:<HAPROXY_STATS_PORT>` to view.
 
-Logs and containers
-- Postgres node logs: `docker compose logs -f postgresql-01`
-- HAProxy logs: `docker compose logs -f haproxy`
+Logs and containers  
+- Postgres node logs: `docker compose logs -f postgresql-01`  
+- HAProxy logs: `docker compose logs -f haproxy`  
 
-Config changes applied while containers are running
+Config changes applied while containers are running  
 - If configs were regenerated, prefer `docker compose down -v` then `make up` to ensure containers pick up the new configs.
 
-Short note on `make check`
+Short note on `make check`  
 - `make check` runs quick Patroni/etcd validations useful for CI or manual verification.
 
 ## Architecture
@@ -144,10 +150,10 @@ Figure: Component diagram — etcd cluster, Patroni-managed PostgreSQL nodes, an
 
 ## Files (short)
 
-- `Makefile` — main project commands (`gen`, `up`, `down`, `regen`, `set-nodes`, `check`).
-- `docker-compose.generator.yml` — generator service that renders configs.
-- `docker-compose.yml` — generated Compose file used to run the stack.
-- `configs/` — templates and generated config files.
+- `Makefile` — main project commands (`gen`, `up`, `down`, `regen`, `set-nodes`, `check`).  
+- `docker-compose.generator.yml` — generator service that renders configs.  
+- `docker-compose.yml` — generated Compose file used to run the stack.  
+- `configs/` — templates and generated config files.  
 
 ## Summary
 
@@ -155,17 +161,15 @@ This README contains only project-specific instructions: `.env` hints, generator
 
 If you'd like, I can add an `env.example` file, or reduce this to a one-paragraph quick start.
 
-Config changes applied while containers are running
+Config changes applied while containers are running  
 - If configs were regenerated, prefer `docker compose down -v` then `make up` to ensure containers use the new configs.
 
-Short note on `make check`
+Short note on `make check`  
 - `make check` runs quick Patroni/etcd validations useful for CI or manual verification.
 
 ## Files (short)
 
-- `Makefile` — main project commands (`gen`, `up`, `down`, `regen`, `set-nodes`, `check`).
-- `docker-compose.generator.yml` — generator service that renders configs.
-- `docker-compose.yml` — generated Compose file used to run the stack.
+- `Makefile` — main project commands (`gen`, `up`, `down`, `regen`, `set-nodes`, `check`).  
+- `docker-compose.generator.yml` — generator service that renders configs.  
+- `docker-compose.yml` — generated Compose file used to run the stack.  
 - `configs/` — templates and generated config files.
-
-

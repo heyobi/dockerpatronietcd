@@ -112,9 +112,3 @@ Figure: Component diagram — etcd cluster, Patroni-managed PostgreSQL nodes, an
 - `docker-compose.generator.yml` — Generator service that renders configs.
 - `docker-compose.yml` — Generated Compose file used to run the stack.
 - `configs/` — Templates and generated config files.
-
-## Summary
-
-This README contains only project-specific instructions: `.env` hints, generator flow, Makefile commands, and quick Patroni/etcd/HAProxy checks. General Docker/system instructions were intentionally removed.
-
-If you'd like, I can add an `env.example` file, or reduce this to a one-paragraph quick start.
